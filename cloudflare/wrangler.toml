@@ -1,0 +1,14 @@
+name = "nexus-edge"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+env = { production = { name = "nexus-edge-prod", routes = [{ pattern = "api.nexus.ai/*", zone_name = "nexus.ai" }] } }
+
+kv_namespaces = [
+  { binding = "CACHE", id = "nexus-cache-kv" }
+]
+
+[build]
+command = "npm install && npm run build"
+cwd = "./cloudflare"
