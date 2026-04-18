@@ -100,6 +100,131 @@
     <script type="text/babel">
         const API_BASE = 'https://nexus-api-mnoq.onrender.com';
 
+        // ── Usage Tracker Helpers ──────────────────────────────────────────
+        const DAILY_LIMITS = { api_calls: 200, stocks_analyzed: 50, alerts_sent: 20 };
+
+        function getUsageKey() {
+            return `nexus_usage_${new Date().toISOString().slice(0, 10)}`;
+        }
+
+        function getUsage() {
+            try {
+                const raw = localStorage.getItem(getUsageKey());
+                return raw ? JSON.parse(raw) : { api_calls: 0, stocks_analyzed: 0, alerts_sent: 0, session_start: Date.now() };
+            } catch { return { api_calls: 0, stocks_analyzed: 0, alerts_sent: 0, session_start: Date.now() }; }
+        }
+
+        function incrementUsage(key, amount = 1) {
+            const u = getUsage();
+            u[key] = (u[key] || 0) + amount;
+            localStorage.setItem(getUsageKey(), JSON.stringify(u));
+            return u;
+        }
+
+        // ── Usage Tracker Widget ───────────────────────────────────────────
+        function UsageTracker() {
+            const [usage, setUsage] = React.useState(getUsage());
+            const [expanded, setExpanded] = React.useState(false);
+
+            // Refresh every 5s so it picks up changes from other functions
+            React.useEffect(() => {
+                const t = setInterval(() => setUsage(getUsage()), 5000);
+                return () => clearInterval(t);
+            }, []);
+
+            const reset = () => {
+                localStorage.removeItem(getUsageKey());
+                setUsage({ api_calls: 0, stocks_analyzed: 0, alerts_sent: 0, session_start: Date.now() });
+            };
+
+            const sessionMins = Math.floor((Date.now() - (usage.session_start || Date.now())) / 60000);
+
+            const Bar = ({ label, value, limit, color }) => {
+                const pct = Math.min((value / limit) * 100, 100);
+                const warn = pct >= 80;
+                return (
+                    <div className="mb-2">
+                        <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-400">{label}</span>
+                            <span style={{ color: warn ? '#ef4444' : '#aaa' }}>{value} / {limit}</span>
+                        </div>
+                        <div style={{ background: '#2a2a2a', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+                            <div style={{
+                                width: `${pct}%`,
+                                height: '100%',
+                                background: warn ? '#ef4444' : color,
+                                borderRadius: 4,
+                                transition: 'width 0.4s ease'
+                            }} />
+                        </div>
+                    </div>
+                );
+            };
+
+            const totalPct = Math.round(
+                ((usage.api_calls / DAILY_LIMITS.api_calls) * 100 +
+                 (usage.stocks_analyzed / DAILY_LIMITS.stocks_analyzed) * 100) / 2
+            );
+
+            return (
+                <div style={{
+                    position: 'fixed', bottom: 20, right: 20, zIndex: 1000,
+                    background: '#111', border: '1px solid #333', borderRadius: 12,
+                    boxShadow: '0 4px 24px rgba(0,212,255,0.15)',
+                    minWidth: expanded ? 260 : 'auto',
+                    transition: 'all 0.3s ease'
+                }}>
+                    {/* Collapsed pill */}
+                    {!expanded && (
+                        <button onClick={() => setExpanded(true)} style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '8px 14px', background: 'none', border: 'none',
+                            cursor: 'pointer', color: 'white'
+                        }}>
+                            <span style={{ fontSize: 16 }}>📊</span>
+                            <span style={{ fontSize: 12, color: '#aaa' }}>Usage</span>
+                            <span style={{
+                                fontSize: 11, fontWeight: 700,
+                                color: totalPct >= 80 ? '#ef4444' : '#00d4ff',
+                                background: totalPct >= 80 ? 'rgba(239,68,68,0.1)' : 'rgba(0,212,255,0.1)',
+                                padding: '2px 7px', borderRadius: 99
+                            }}>{totalPct}%</span>
+                        </button>
+                    )}
+
+                    {/* Expanded panel */}
+                    {expanded && (
+                        <div style={{ padding: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                <span style={{ fontWeight: 700, fontSize: 13, color: '#00d4ff' }}>📊 Daily Usage</span>
+                                <button onClick={() => setExpanded(false)} style={{
+                                    background: 'none', border: 'none', color: '#888',
+                                    cursor: 'pointer', fontSize: 16, lineHeight: 1
+                                }}>✕</button>
+                            </div>
+
+                            <Bar label="API Calls" value={usage.api_calls} limit={DAILY_LIMITS.api_calls} color="#00d4ff" />
+                            <Bar label="Stocks Analyzed" value={usage.stocks_analyzed} limit={DAILY_LIMITS.stocks_analyzed} color="#10b981" />
+                            <Bar label="Alerts Sent" value={usage.alerts_sent || 0} limit={DAILY_LIMITS.alerts_sent} color="#f59e0b" />
+
+                            <div style={{ borderTop: '1px solid #222', marginTop: 10, paddingTop: 10 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#555' }}>
+                                    <span>⏱ Session: {sessionMins}m</span>
+                                    <span>🔄 Resets at midnight</span>
+                                </div>
+                                <button onClick={reset} style={{
+                                    marginTop: 8, width: '100%', padding: '5px',
+                                    background: '#1a1a1a', border: '1px solid #333',
+                                    borderRadius: 6, color: '#888', fontSize: 11,
+                                    cursor: 'pointer'
+                                }}>Reset Today's Count</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         function App() {
             const [activeTab, setActiveTab] = React.useState('dashboard');
             const [portfolio, setPortfolio] = React.useState([]);
@@ -129,6 +254,7 @@
                     const res = await fetch(`${API_BASE}/portfolio`);
                     const data = await res.json();
                     setPortfolio(data.portfolio || []);
+                    incrementUsage('api_calls');
                 } catch (e) {
                     console.error('Portfolio fetch error:', e);
                 }
@@ -139,6 +265,7 @@
                     const res = await fetch(`${API_BASE}/indices`);
                     const data = await res.json();
                     setIndices(data);
+                    incrementUsage('api_calls');
                 } catch (e) {
                     console.error('Indices fetch error:', e);
                 }
@@ -149,6 +276,7 @@
                     const res = await fetch(`${API_BASE}/fear-greed`);
                     const data = await res.json();
                     setFearGreed(data.score || 50);
+                    incrementUsage('api_calls');
                 } catch (e) {
                     console.error('Fear/Greed fetch error:', e);
                 }
@@ -159,6 +287,7 @@
                     const res = await fetch(`${API_BASE}/macro`);
                     const data = await res.json();
                     setMacro(data);
+                    incrementUsage('api_calls');
                 } catch (e) {
                     console.error('Macro fetch error:', e);
                 }
@@ -170,6 +299,8 @@
                 try {
                     const res = await fetch(`${API_BASE}/analyze/${searchTicker.toUpperCase()}`);
                     const data = await res.json();
+                    incrementUsage('api_calls');
+                    incrementUsage('stocks_analyzed');
                     console.log('Analysis:', data);
                     // Could show modal with results
                     alert(`${searchTicker}: ${data.composite.action} (${data.composite.score}/10)`);
@@ -257,6 +388,9 @@
                             <BacktestsTab />
                         )}
                     </main>
+
+                    {/* Usage Tracker — floating bottom-right */}
+                    <UsageTracker />
                 </div>
             );
         }
