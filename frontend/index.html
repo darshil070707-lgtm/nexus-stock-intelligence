@@ -3,624 +3,505 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS - Advanced Stock Intelligence</title>
+    <title>NEXUS — Live Stock Intelligence</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lightweight-charts@4/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            background-color: #0a0a0a;
-            color: #f0f0f0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #00d4ff, #0099ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .card {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 16px;
-            transition: all 0.3s ease;
-        }
-        .card:hover {
-            border-color: #00d4ff;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
-        }
-        .buy-border { border-left: 4px solid #10b981; }
-        .sell-border { border-left: 4px solid #ef4444; }
-        .hold-border { border-left: 4px solid #f59e0b; }
-        .button {
-            background: linear-gradient(135deg, #00d4ff, #0099ff);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-weight: 600;
-            transition: opacity 0.2s;
-        }
-        .button:hover { opacity: 0.8; }
-        .tab-button {
-            padding: 12px 20px;
-            border: none;
-            background: transparent;
-            color: #888;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
-        }
-        .tab-button.active {
-            color: #00d4ff;
-            border-bottom-color: #00d4ff;
-        }
-        .loading {
-            display: inline-block;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .gauge {
-            width: 200px;
-            height: 100px;
-            background: conic-gradient(
-                #ef4444 0deg 90deg,
-                #f59e0b 90deg 180deg,
-                #10b981 180deg 270deg,
-                #10b981 270deg 360deg
-            );
-            border-radius: 100px 100px 0 0;
-            position: relative;
-        }
-        .gauge-needle {
-            position: absolute;
-            width: 4px;
-            height: 80px;
-            background: white;
-            bottom: 0;
-            left: 50%;
-            transform-origin: bottom center;
-            transform: translateX(-2px) rotate(var(--rotation));
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #080810; color: #e8e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .glow-text { background: linear-gradient(135deg, #00d4ff, #7b61ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .card { background: #111120; border: 1px solid #1e1e3a; border-radius: 12px; padding: 16px; transition: border-color 0.2s, box-shadow 0.2s; }
+        .card:hover { border-color: #00d4ff44; box-shadow: 0 0 20px #00d4ff11; }
+        .buy-glow { border-left: 3px solid #10b981; box-shadow: -4px 0 16px #10b98122; }
+        .sell-glow { border-left: 3px solid #ef4444; box-shadow: -4px 0 16px #ef444422; }
+        .hold-glow { border-left: 3px solid #f59e0b; box-shadow: -4px 0 16px #f59e0b22; }
+        .badge-buy { background: #10b98122; color: #10b981; border: 1px solid #10b98144; }
+        .badge-sell { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+        .badge-hold { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
+        .tab-btn { padding: 10px 18px; border: none; background: none; color: #666; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+        .tab-btn.active { color: #00d4ff; border-bottom-color: #00d4ff; }
+        .btn-primary { background: linear-gradient(135deg, #00d4ff, #7b61ff); border: none; padding: 9px 20px; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .btn-primary:hover { opacity: 0.85; }
+        .score-bar-wrap { background: #1a1a2e; border-radius: 99px; height: 6px; overflow: hidden; }
+        .score-bar { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+        input { background: #111120; border: 1px solid #2a2a4a; border-radius: 8px; padding: 9px 14px; color: white; font-size: 14px; outline: none; }
+        input:focus { border-color: #00d4ff; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a15; }
+        ::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 3px; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .live-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const API = 'https://nexus-api-mnoq.onrender.com';
+const WS_URL = 'wss://nexus-api-mnoq.onrender.com/ws';
 
-    <script type="text/babel">
-        const API_BASE = 'https://nexus-api-mnoq.onrender.com';
+// ── Usage tracking ────────────────────────────────────────────────────────────
+const LIMITS = { api_calls: 200, stocks_analyzed: 50 };
+function todayKey() { return `nx_usage_${new Date().toISOString().slice(0,10)}`; }
+function getUsage() {
+    try { return JSON.parse(localStorage.getItem(todayKey())) || { api_calls:0, stocks_analyzed:0, t0: Date.now() }; }
+    catch { return { api_calls:0, stocks_analyzed:0, t0: Date.now() }; }
+}
+function bump(key) {
+    const u = getUsage(); u[key] = (u[key]||0)+1;
+    localStorage.setItem(todayKey(), JSON.stringify(u));
+}
 
-        // ── Usage Tracker Helpers ──────────────────────────────────────────
-        const DAILY_LIMITS = { api_calls: 200, stocks_analyzed: 50, alerts_sent: 20 };
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function scoreColor(s) { return s >= 3 ? '#10b981' : s <= -2 ? '#ef4444' : '#f59e0b'; }
+function scoreWidth(s) { return Math.min(100, Math.max(0, ((s + 8) / 16) * 100)); }
+function fmt(n, d=2) { return n == null ? '—' : Number(n).toFixed(d); }
+function currency(sig) { return sig.currency || (sig.market==='India' ? '₹' : '$'); }
 
-        function getUsageKey() {
-            return `nexus_usage_${new Date().toISOString().slice(0, 10)}`;
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+    const [tab, setTab] = React.useState('dashboard');
+    const [signals, setSignals] = React.useState([]);
+    const [indices, setIndices] = React.useState({});
+    const [fearGreed, setFearGreed] = React.useState(null);
+    const [wsStatus, setWsStatus] = React.useState('connecting');
+    const [lastUpdate, setLastUpdate] = React.useState(null);
+    const [search, setSearch] = React.useState('');
+    const [searchResult, setSearchResult] = React.useState(null);
+    const [searchLoading, setSearchLoading] = React.useState(false);
+    const [usage, setUsage] = React.useState(getUsage());
+
+    // WebSocket
+    React.useEffect(() => {
+        let ws, retryTimer;
+        function connect() {
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => { setWsStatus('live'); };
+            ws.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                if (msg.type === 'snapshot') {
+                    setSignals(msg.data || []);
+                    setLastUpdate(new Date());
+                } else if (msg.type === 'signal_update') {
+                    setSignals(prev => {
+                        const idx = prev.findIndex(s => s.ticker === msg.data.ticker);
+                        if (idx >= 0) { const n=[...prev]; n[idx]=msg.data; return n; }
+                        return [msg.data, ...prev];
+                    });
+                    setLastUpdate(new Date());
+                }
+            };
+            ws.onerror = () => setWsStatus('error');
+            ws.onclose = () => {
+                setWsStatus('reconnecting');
+                retryTimer = setTimeout(connect, 4000);
+            };
         }
+        connect();
+        return () => { ws?.close(); clearTimeout(retryTimer); };
+    }, []);
 
-        function getUsage() {
+    // REST fallback if WS snapshot empty after 5s
+    React.useEffect(() => {
+        const t = setTimeout(async () => {
+            if (signals.length === 0) {
+                try {
+                    const r = await fetch(`${API}/signals`); bump('api_calls');
+                    const d = await r.json();
+                    if (d.signals?.length) setSignals(d.signals);
+                } catch {}
+            }
+        }, 5000);
+        return () => clearTimeout(t);
+    }, [signals.length]);
+
+    // Indices + Fear/Greed
+    React.useEffect(() => {
+        async function load() {
             try {
-                const raw = localStorage.getItem(getUsageKey());
-                return raw ? JSON.parse(raw) : { api_calls: 0, stocks_analyzed: 0, alerts_sent: 0, session_start: Date.now() };
-            } catch { return { api_calls: 0, stocks_analyzed: 0, alerts_sent: 0, session_start: Date.now() }; }
+                const [ir, fr] = await Promise.all([
+                    fetch(`${API}/indices`), fetch(`${API}/fear-greed`)
+                ]);
+                bump('api_calls'); bump('api_calls');
+                setIndices(await ir.json());
+                setFearGreed(await fr.json());
+            } catch {}
         }
+        load();
+        const t = setInterval(load, 60000);
+        return () => clearInterval(t);
+    }, []);
 
-        function incrementUsage(key, amount = 1) {
-            const u = getUsage();
-            u[key] = (u[key] || 0) + amount;
-            localStorage.setItem(getUsageKey(), JSON.stringify(u));
-            return u;
-        }
+    const refreshUsage = () => setUsage(getUsage());
 
-        // ── Usage Tracker Widget ───────────────────────────────────────────
-        function UsageTracker() {
-            const [usage, setUsage] = React.useState(getUsage());
-            const [expanded, setExpanded] = React.useState(false);
+    const analyzeSearch = async () => {
+        if (!search.trim()) return;
+        setSearchLoading(true); setSearchResult(null);
+        try {
+            const r = await fetch(`${API}/signals/${search.trim().toUpperCase()}`);
+            const d = await r.json();
+            bump('api_calls'); bump('stocks_analyzed');
+            setSearchResult(d);
+            refreshUsage();
+        } catch { setSearchResult({ error: 'Failed' }); }
+        setSearchLoading(false);
+    };
 
-            // Refresh every 5s so it picks up changes from other functions
-            React.useEffect(() => {
-                const t = setInterval(() => setUsage(getUsage()), 5000);
-                return () => clearInterval(t);
-            }, []);
+    const buys  = signals.filter(s => s.action === 'BUY').sort((a,b) => b.score - a.score);
+    const sells = signals.filter(s => s.action === 'SELL').sort((a,b) => a.score - b.score);
+    const holds = signals.filter(s => s.action === 'HOLD');
 
-            const reset = () => {
-                localStorage.removeItem(getUsageKey());
-                setUsage({ api_calls: 0, stocks_analyzed: 0, alerts_sent: 0, session_start: Date.now() });
-            };
-
-            const sessionMins = Math.floor((Date.now() - (usage.session_start || Date.now())) / 60000);
-
-            const Bar = ({ label, value, limit, color }) => {
-                const pct = Math.min((value / limit) * 100, 100);
-                const warn = pct >= 80;
-                return (
-                    <div className="mb-2">
-                        <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-400">{label}</span>
-                            <span style={{ color: warn ? '#ef4444' : '#aaa' }}>{value} / {limit}</span>
-                        </div>
-                        <div style={{ background: '#2a2a2a', borderRadius: 4, height: 6, overflow: 'hidden' }}>
-                            <div style={{
-                                width: `${pct}%`,
-                                height: '100%',
-                                background: warn ? '#ef4444' : color,
-                                borderRadius: 4,
-                                transition: 'width 0.4s ease'
-                            }} />
+    return (
+        <div style={{ minHeight: '100vh' }}>
+            {/* Header */}
+            <header style={{ borderBottom: '1px solid #1e1e3a', background: '#080810ee', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
+                <div style={{ maxWidth: 1280, margin: '0 auto', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <h1 className="glow-text" style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.5px' }}>NEXUS</h1>
+                        <span style={{ fontSize: 11, color: '#444', background: '#111120', border: '1px solid #1e1e3a', padding: '2px 8px', borderRadius: 99 }}>v3.0 • Live Intelligence</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div className="live-dot" />
+                            <span style={{ fontSize: 11, color: wsStatus === 'live' ? '#10b981' : '#f59e0b' }}>
+                                {wsStatus === 'live' ? 'LIVE' : wsStatus === 'reconnecting' ? 'Reconnecting…' : 'Connecting…'}
+                            </span>
                         </div>
                     </div>
-                );
-            };
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                        {fearGreed && <FearPill fg={fearGreed} />}
+                        {lastUpdate && <span style={{ fontSize: 11, color: '#555' }}>Updated {lastUpdate.toLocaleTimeString()}</span>}
+                    </div>
+                </div>
 
-            const totalPct = Math.round(
-                ((usage.api_calls / DAILY_LIMITS.api_calls) * 100 +
-                 (usage.stocks_analyzed / DAILY_LIMITS.stocks_analyzed) * 100) / 2
-            );
-
-            return (
-                <div style={{
-                    position: 'fixed', bottom: 20, right: 20, zIndex: 1000,
-                    background: '#111', border: '1px solid #333', borderRadius: 12,
-                    boxShadow: '0 4px 24px rgba(0,212,255,0.15)',
-                    minWidth: expanded ? 260 : 'auto',
-                    transition: 'all 0.3s ease'
-                }}>
-                    {/* Collapsed pill */}
-                    {!expanded && (
-                        <button onClick={() => setExpanded(true)} style={{
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            padding: '8px 14px', background: 'none', border: 'none',
-                            cursor: 'pointer', color: 'white'
-                        }}>
-                            <span style={{ fontSize: 16 }}>📊</span>
-                            <span style={{ fontSize: 12, color: '#aaa' }}>Usage</span>
-                            <span style={{
-                                fontSize: 11, fontWeight: 700,
-                                color: totalPct >= 80 ? '#ef4444' : '#00d4ff',
-                                background: totalPct >= 80 ? 'rgba(239,68,68,0.1)' : 'rgba(0,212,255,0.1)',
-                                padding: '2px 7px', borderRadius: 99
-                            }}>{totalPct}%</span>
-                        </button>
-                    )}
-
-                    {/* Expanded panel */}
-                    {expanded && (
-                        <div style={{ padding: 16 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                <span style={{ fontWeight: 700, fontSize: 13, color: '#00d4ff' }}>📊 Daily Usage</span>
-                                <button onClick={() => setExpanded(false)} style={{
-                                    background: 'none', border: 'none', color: '#888',
-                                    cursor: 'pointer', fontSize: 16, lineHeight: 1
-                                }}>✕</button>
-                            </div>
-
-                            <Bar label="API Calls" value={usage.api_calls} limit={DAILY_LIMITS.api_calls} color="#00d4ff" />
-                            <Bar label="Stocks Analyzed" value={usage.stocks_analyzed} limit={DAILY_LIMITS.stocks_analyzed} color="#10b981" />
-                            <Bar label="Alerts Sent" value={usage.alerts_sent || 0} limit={DAILY_LIMITS.alerts_sent} color="#f59e0b" />
-
-                            <div style={{ borderTop: '1px solid #222', marginTop: 10, paddingTop: 10 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#555' }}>
-                                    <span>⏱ Session: {sessionMins}m</span>
-                                    <span>🔄 Resets at midnight</span>
-                                </div>
-                                <button onClick={reset} style={{
-                                    marginTop: 8, width: '100%', padding: '5px',
-                                    background: '#1a1a1a', border: '1px solid #333',
-                                    borderRadius: 6, color: '#888', fontSize: 11,
-                                    cursor: 'pointer'
-                                }}>Reset Today's Count</button>
+                {/* Indices ticker */}
+                <div style={{ borderTop: '1px solid #1e1e3a', display: 'flex', gap: 0, overflowX: 'auto', padding: '0 24px' }}>
+                    {Object.entries(indices).map(([name, d]) => (
+                        <div key={name} style={{ padding: '8px 20px', borderRight: '1px solid #1e1e3a', minWidth: 'fit-content' }}>
+                            <div style={{ fontSize: 10, color: '#555', marginBottom: 2 }}>{name}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: d.change_pct >= 0 ? '#10b981' : '#ef4444' }}>
+                                {fmt(d.price, 0)} <span style={{ fontSize: 11 }}>{d.change_pct >= 0 ? '+' : ''}{fmt(d.change_pct)}%</span>
                             </div>
                         </div>
-                    )}
+                    ))}
                 </div>
-            );
-        }
 
-        function App() {
-            const [activeTab, setActiveTab] = React.useState('dashboard');
-            const [portfolio, setPortfolio] = React.useState([]);
-            const [loading, setLoading] = React.useState(false);
-            const [searchTicker, setSearchTicker] = React.useState('');
-            const [indices, setIndices] = React.useState({});
-            const [fearGreed, setFearGreed] = React.useState(50);
-            const [macro, setMacro] = React.useState({});
+                {/* Tabs */}
+                <div style={{ display: 'flex', borderTop: '1px solid #1e1e3a', padding: '0 16px' }}>
+                    {[['dashboard','📊 Dashboard'],['signals','🎯 Signals'],['search','🔍 Search'],['usage','📈 Usage']].map(([k,l]) => (
+                        <button key={k} className={`tab-btn ${tab===k?'active':''}`} onClick={() => setTab(k)}>{l}</button>
+                    ))}
+                </div>
+            </header>
 
-            // Fetch data on mount
-            React.useEffect(() => {
-                fetchPortfolio();
-                fetchIndices();
-                fetchFearGreed();
-                fetchMacro();
+            {/* Main */}
+            <main style={{ maxWidth: 1280, margin: '0 auto', padding: '24px' }}>
+                {tab === 'dashboard' && <Dashboard buys={buys} sells={sells} holds={holds} signals={signals} />}
+                {tab === 'signals'   && <Signals signals={signals} />}
+                {tab === 'search'    && <Search search={search} setSearch={setSearch} onAnalyze={analyzeSearch} loading={searchLoading} result={searchResult} />}
+                {tab === 'usage'     && <UsageTab usage={usage} onReset={() => { localStorage.removeItem(todayKey()); refreshUsage(); }} />}
+            </main>
 
-                const interval = setInterval(() => {
-                    fetchPortfolio();
-                    fetchIndices();
-                }, 30000); // Refresh every 30s
+            {/* Usage pill */}
+            <UsagePill usage={usage} />
+        </div>
+    );
+}
 
-                return () => clearInterval(interval);
-            }, []);
+// ── Fear/Greed Pill ───────────────────────────────────────────────────────────
+function FearPill({ fg }) {
+    const c = fg.score > 55 ? '#10b981' : fg.score > 45 ? '#f59e0b' : '#ef4444';
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#111120', border: `1px solid ${c}44`, borderRadius: 99, padding: '4px 12px' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />
+            <span style={{ fontSize: 11, color: c }}>{fg.label}</span>
+            <span style={{ fontSize: 12, color: '#888', fontWeight: 700 }}>{fmt(fg.score, 0)}</span>
+        </div>
+    );
+}
 
-            const fetchPortfolio = async () => {
-                try {
-                    const res = await fetch(`${API_BASE}/portfolio`);
-                    const data = await res.json();
-                    setPortfolio(data.portfolio || []);
-                    incrementUsage('api_calls');
-                } catch (e) {
-                    console.error('Portfolio fetch error:', e);
-                }
-            };
+// ── Dashboard Tab ─────────────────────────────────────────────────────────────
+function Dashboard({ buys, sells, holds, signals }) {
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Summary cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                {[
+                    { label: 'BUY Signals', value: buys.length, color: '#10b981' },
+                    { label: 'SELL Signals', value: sells.length, color: '#ef4444' },
+                    { label: 'HOLD Signals', value: holds.length, color: '#f59e0b' },
+                    { label: 'Tracked Stocks', value: signals.length, color: '#00d4ff' },
+                ].map(({ label, value, color }) => (
+                    <div key={label} className="card" style={{ textAlign: 'center', padding: '20px 16px' }}>
+                        <div style={{ fontSize: 36, fontWeight: 900, color }}>{value}</div>
+                        <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{label}</div>
+                    </div>
+                ))}
+            </div>
 
-            const fetchIndices = async () => {
-                try {
-                    const res = await fetch(`${API_BASE}/indices`);
-                    const data = await res.json();
-                    setIndices(data);
-                    incrementUsage('api_calls');
-                } catch (e) {
-                    console.error('Indices fetch error:', e);
-                }
-            };
+            {/* Top BUYs */}
+            {buys.length > 0 && (
+                <section>
+                    <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: '#10b981' }}>🟢 Top BUY Opportunities</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                        {buys.slice(0, 6).map(s => <SignalCard key={s.ticker} sig={s} />)}
+                    </div>
+                </section>
+            )}
 
-            const fetchFearGreed = async () => {
-                try {
-                    const res = await fetch(`${API_BASE}/fear-greed`);
-                    const data = await res.json();
-                    setFearGreed(data.score || 50);
-                    incrementUsage('api_calls');
-                } catch (e) {
-                    console.error('Fear/Greed fetch error:', e);
-                }
-            };
+            {/* Top SELLs */}
+            {sells.length > 0 && (
+                <section>
+                    <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: '#ef4444' }}>🔴 SELL / Avoid</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                        {sells.slice(0, 4).map(s => <SignalCard key={s.ticker} sig={s} />)}
+                    </div>
+                </section>
+            )}
 
-            const fetchMacro = async () => {
-                try {
-                    const res = await fetch(`${API_BASE}/macro`);
-                    const data = await res.json();
-                    setMacro(data);
-                    incrementUsage('api_calls');
-                } catch (e) {
-                    console.error('Macro fetch error:', e);
-                }
-            };
+            {signals.length === 0 && (
+                <div className="card" style={{ textAlign: 'center', padding: 48, color: '#444' }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Ingesting 50 stocks…</div>
+                    <div style={{ fontSize: 13 }}>First load takes ~60s. Signals will stream in via WebSocket.</div>
+                </div>
+            )}
+        </div>
+    );
+}
 
-            const analyzeStock = async () => {
-                if (!searchTicker) return;
-                setLoading(true);
-                try {
-                    const res = await fetch(`${API_BASE}/analyze/${searchTicker.toUpperCase()}`);
-                    const data = await res.json();
-                    incrementUsage('api_calls');
-                    incrementUsage('stocks_analyzed');
-                    console.log('Analysis:', data);
-                    // Could show modal with results
-                    alert(`${searchTicker}: ${data.composite.action} (${data.composite.score}/10)`);
-                } catch (e) {
-                    alert('Error analyzing ticker');
-                } finally {
-                    setLoading(false);
-                }
-            };
+// ── Signals Tab ───────────────────────────────────────────────────────────────
+function Signals({ signals }) {
+    const [filter, setFilter] = React.useState('ALL');
+    const [mkt, setMkt] = React.useState('ALL');
 
-            return (
-                <div className="min-h-screen bg-black text-white">
-                    {/* Header */}
-                    <header className="border-b border-gray-800 bg-black/50 backdrop-blur sticky top-0 z-50">
-                        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <h1 className="text-3xl font-bold gradient-text">NEXUS</h1>
-                                <span className="text-sm text-gray-500">v2.0 • Stock Intelligence</span>
+    const filtered = signals
+        .filter(s => filter === 'ALL' || s.action === filter)
+        .filter(s => mkt === 'ALL' || s.market === mkt)
+        .sort((a,b) => b.score - a.score);
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                {['ALL','BUY','HOLD','SELL'].map(f => (
+                    <button key={f} onClick={() => setFilter(f)} style={{
+                        padding: '6px 14px', borderRadius: 99, border: '1px solid',
+                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        background: filter===f ? (f==='BUY'?'#10b981':f==='SELL'?'#ef4444':f==='HOLD'?'#f59e0b':'#00d4ff') : 'transparent',
+                        color: filter===f ? '#000' : '#888',
+                        borderColor: filter===f ? 'transparent' : '#2a2a4a'
+                    }}>{f} {f!=='ALL' ? signals.filter(s=>s.action===f).length : signals.length}</button>
+                ))}
+                <div style={{ width: 1, height: 20, background: '#2a2a4a', margin: '0 4px' }} />
+                {['ALL','US','India'].map(m => (
+                    <button key={m} onClick={() => setMkt(m)} style={{
+                        padding: '6px 14px', borderRadius: 99, border: '1px solid',
+                        fontSize: 12, cursor: 'pointer',
+                        background: mkt===m ? '#7b61ff' : 'transparent',
+                        color: mkt===m ? '#fff' : '#888',
+                        borderColor: mkt===m ? 'transparent' : '#2a2a4a'
+                    }}>{m}</button>
+                ))}
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#555' }}>{filtered.length} stocks</span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                {filtered.map(s => <SignalCard key={s.ticker} sig={s} />)}
+            </div>
+
+            {filtered.length === 0 && (
+                <div className="card" style={{ textAlign: 'center', padding: 40, color: '#555' }}>
+                    No signals yet. Ingestion running…
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Signal Card ───────────────────────────────────────────────────────────────
+function SignalCard({ sig }) {
+    const [open, setOpen] = React.useState(false);
+    const ac = sig.action;
+    const cls = ac==='BUY' ? 'buy-glow' : ac==='SELL' ? 'sell-glow' : 'hold-glow';
+    const badgeCls = ac==='BUY' ? 'badge-buy' : ac==='SELL' ? 'badge-sell' : 'badge-hold';
+    const sc = scoreColor(sig.score);
+    const cur = currency(sig);
+
+    return (
+        <div className={`card ${cls} fade-in`} style={{ cursor: 'pointer' }} onClick={() => setOpen(!open)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div>
+                    <div style={{ fontWeight: 800, fontSize: 16 }}>{sig.ticker}</div>
+                    <div style={{ fontSize: 11, color: '#555', marginTop: 2 }}>{sig.market} • {sig.confidence} confidence</div>
+                </div>
+                <span className={badgeCls} style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 700 }}>{ac}</span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13, marginBottom: 12 }}>
+                <div>
+                    <div style={{ color: '#555', fontSize: 11 }}>Price</div>
+                    <div style={{ fontWeight: 700 }}>{cur}{fmt(sig.price)}</div>
+                </div>
+                <div>
+                    <div style={{ color: '#555', fontSize: 11 }}>Day</div>
+                    <div style={{ fontWeight: 700, color: sig.change_pct >= 0 ? '#10b981' : '#ef4444' }}>
+                        {sig.change_pct >= 0 ? '+' : ''}{fmt(sig.change_pct)}%
+                    </div>
+                </div>
+                <div>
+                    <div style={{ color: '#555', fontSize: 11 }}>RSI</div>
+                    <div style={{ fontWeight: 700, color: sig.rsi < 30 ? '#10b981' : sig.rsi > 70 ? '#ef4444' : '#e8e8f0' }}>{fmt(sig.rsi, 1)}</div>
+                </div>
+                <div>
+                    <div style={{ color: '#555', fontSize: 11 }}>1M</div>
+                    <div style={{ fontWeight: 700, color: sig.momentum_1m >= 0 ? '#10b981' : '#ef4444' }}>
+                        {sig.momentum_1m >= 0 ? '+' : ''}{fmt(sig.momentum_1m)}%
+                    </div>
+                </div>
+            </div>
+
+            {/* Score bar */}
+            <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
+                    <span style={{ color: '#555' }}>Signal Score</span>
+                    <span style={{ color: sc, fontWeight: 700 }}>{sig.score > 0 ? '+' : ''}{fmt(sig.score, 1)}</span>
+                </div>
+                <div className="score-bar-wrap">
+                    <div className="score-bar" style={{ width: `${scoreWidth(sig.score)}%`, background: sc }} />
+                </div>
+            </div>
+
+            {/* Details expanded */}
+            {open && sig.details && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #1e1e3a' }}>
+                    {Object.entries(sig.details).map(([k, v]) => (
+                        <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '2px 0', color: '#777' }}>
+                            <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>{k}</span>
+                            <span style={{ color: v.includes('+') ? '#10b981' : v.includes('-') && !v.includes('(-0') ? '#ef4444' : '#888' }}>{v}</span>
+                        </div>
+                    ))}
+                    <div style={{ fontSize: 10, color: '#444', marginTop: 6 }}>
+                        Updated {sig.updated_at ? new Date(sig.updated_at).toLocaleTimeString() : '—'}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Search Tab ────────────────────────────────────────────────────────────────
+function Search({ search, setSearch, onAnalyze, loading, result }) {
+    return (
+        <div style={{ maxWidth: 600 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Search Any Stock</h2>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+                <input
+                    style={{ flex: 1 }}
+                    placeholder="AAPL, RELIANCE.NS, NVDA…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && onAnalyze()}
+                />
+                <button className="btn-primary" onClick={onAnalyze} disabled={loading}>
+                    {loading ? '⏳' : '🔍'} Analyze
+                </button>
+            </div>
+
+            {result && !result.error && (
+                <div className="fade-in">
+                    <SignalCard sig={result} />
+                </div>
+            )}
+            {result?.error && (
+                <div className="card" style={{ color: '#ef4444', textAlign: 'center', padding: 24 }}>
+                    Could not fetch data. Check the ticker symbol.
+                </div>
+            )}
+            {!result && (
+                <div className="card" style={{ color: '#444', textAlign: 'center', padding: 32, fontSize: 13 }}>
+                    Enter any ticker for a live 8-factor signal analysis
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Usage Tab ─────────────────────────────────────────────────────────────────
+function UsageTab({ usage, onReset }) {
+    const mins = Math.floor((Date.now() - (usage.t0 || Date.now())) / 60000);
+    const Bar = ({ label, val, limit, color }) => {
+        const pct = Math.min(100, (val / limit) * 100);
+        return (
+            <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                    <span style={{ color: '#aaa' }}>{label}</span>
+                    <span style={{ color: pct >= 80 ? '#ef4444' : color, fontWeight: 700 }}>{val} / {limit}</span>
+                </div>
+                <div className="score-bar-wrap" style={{ height: 10 }}>
+                    <div className="score-bar" style={{ width: `${pct}%`, background: pct >= 80 ? '#ef4444' : color }} />
+                </div>
+                <div style={{ fontSize: 11, color: '#555', marginTop: 4 }}>{pct.toFixed(0)}% of daily limit</div>
+            </div>
+        );
+    };
+    return (
+        <div style={{ maxWidth: 480 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700 }}>Daily Usage</h2>
+                <span style={{ fontSize: 12, color: '#555' }}>⏱ Session: {mins}m</span>
+            </div>
+            <div className="card" style={{ padding: 24 }}>
+                <Bar label="API Calls" val={usage.api_calls||0} limit={LIMITS.api_calls} color="#00d4ff" />
+                <Bar label="Stocks Analyzed (Search)" val={usage.stocks_analyzed||0} limit={LIMITS.stocks_analyzed} color="#10b981" />
+                <div style={{ borderTop: '1px solid #1e1e3a', paddingTop: 16, marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: '#555' }}>Resets at midnight</span>
+                    <button onClick={onReset} style={{ background: '#1a1a2e', border: '1px solid #2a2a4a', borderRadius: 6, color: '#888', fontSize: 12, padding: '6px 14px', cursor: 'pointer' }}>Reset</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Usage Pill (floating) ─────────────────────────────────────────────────────
+function UsagePill({ usage }) {
+    const [exp, setExp] = React.useState(false);
+    const pct = Math.round(((usage.api_calls||0) / LIMITS.api_calls) * 100);
+    const warn = pct >= 80;
+    return (
+        <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 999, background: '#111120', border: '1px solid #1e1e3a', borderRadius: 12, boxShadow: '0 4px 24px #0008' }}>
+            {!exp ? (
+                <button onClick={() => setExp(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'white' }}>
+                    <span>📊</span>
+                    <span style={{ fontSize: 12, color: '#888' }}>Usage</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: warn ? '#ef4444' : '#00d4ff', background: warn ? '#ef444422' : '#00d4ff22', padding: '2px 7px', borderRadius: 99 }}>{pct}%</span>
+                </button>
+            ) : (
+                <div style={{ padding: '14px 16px', minWidth: 220 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: '#00d4ff' }}>📊 Usage Today</span>
+                        <button onClick={() => setExp(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: 16 }}>✕</button>
+                    </div>
+                    {[['API Calls', usage.api_calls||0, LIMITS.api_calls, '#00d4ff'],
+                      ['Analyzed', usage.stocks_analyzed||0, LIMITS.stocks_analyzed, '#10b981']].map(([l,v,lim,c]) => (
+                        <div key={l} style={{ marginBottom: 10 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
+                                <span style={{ color: '#888' }}>{l}</span>
+                                <span style={{ color: c }}>{v}/{lim}</span>
                             </div>
-                            <div className="flex items-center gap-6">
-                                <FearGaugeWidget value={fearGreed} />
-                                <div className="text-sm">
-                                    <div className="text-gray-500">Market Status</div>
-                                    <div className="text-green-400">Open</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Indices Bar */}
-                        <div className="border-t border-gray-800 flex overflow-x-auto gap-6 px-6 py-3 text-sm">
-                            {Object.entries(indices).map(([name, data]) => (
-                                <div key={name} className="whitespace-nowrap">
-                                    <div className="text-gray-500">{name}</div>
-                                    <div className={data.change_pct > 0 ? 'text-green-400' : 'text-red-400'}>
-                                        ${data.price?.toFixed(2)} {data.change_pct > 0 ? '+' : ''}{data.change_pct?.toFixed(2)}%
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </header>
-
-                    {/* Tabs */}
-                    <div className="border-b border-gray-800 sticky top-20 z-40 bg-black/50 backdrop-blur">
-                        <div className="max-w-7xl mx-auto flex">
-                            {['dashboard', 'portfolio', 'search', 'macro', 'backtests'].map(tab => (
-                                <button
-                                    key={tab}
-                                    className={`tab-button capitalize ${activeTab === tab ? 'active' : ''}`}
-                                    onClick={() => setActiveTab(tab)}
-                                >
-                                    {tab === 'dashboard' ? '📊 Dashboard' :
-                                     tab === 'portfolio' ? '💼 Portfolio' :
-                                     tab === 'search' ? '🔍 Search' :
-                                     tab === 'macro' ? '🌍 Macro' :
-                                     '📈 Backtests'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Main Content */}
-                    <main className="max-w-7xl mx-auto px-6 py-8">
-                        {activeTab === 'dashboard' && (
-                            <DashboardTab portfolio={portfolio} />
-                        )}
-
-                        {activeTab === 'portfolio' && (
-                            <PortfolioTab portfolio={portfolio} onRefresh={fetchPortfolio} />
-                        )}
-
-                        {activeTab === 'search' && (
-                            <SearchTab
-                                ticker={searchTicker}
-                                onTickerChange={setSearchTicker}
-                                onAnalyze={analyzeStock}
-                                loading={loading}
-                            />
-                        )}
-
-                        {activeTab === 'macro' && (
-                            <MacroTab macro={macro} fearGreed={fearGreed} />
-                        )}
-
-                        {activeTab === 'backtests' && (
-                            <BacktestsTab />
-                        )}
-                    </main>
-
-                    {/* Usage Tracker — floating bottom-right */}
-                    <UsageTracker />
-                </div>
-            );
-        }
-
-        function FearGaugeWidget({ value }) {
-            const rotation = (value / 100) * 180 - 90;
-            const label = value >= 75 ? 'Extreme Greed' :
-                         value >= 55 ? 'Greed' :
-                         value >= 45 ? 'Neutral' :
-                         value >= 25 ? 'Fear' :
-                         'Extreme Fear';
-
-            return (
-                <div className="text-center">
-                    <div style={{
-                        width: '100px',
-                        height: '50px',
-                        background: 'conic-gradient(#ef4444 0deg 90deg, #f59e0b 90deg 180deg, #10b981 180deg 270deg, #10b981 270deg 360deg)',
-                        borderRadius: '50px 50px 0 0',
-                        position: 'relative'
-                    }}>
-                        <div style={{
-                            position: 'absolute',
-                            width: '3px',
-                            height: '40px',
-                            background: 'white',
-                            bottom: 0,
-                            left: '50%',
-                            transformOrigin: 'bottom center',
-                            transform: `translateX(-1.5px) rotate(${rotation}deg)`
-                        }} />
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">{label}</div>
-                </div>
-            );
-        }
-
-        function DashboardTab({ portfolio }) {
-            const buys = portfolio.filter(p => p.latest_signal?.action === 'BUY');
-            const sells = portfolio.filter(p => p.latest_signal?.action === 'SELL');
-            const holds = portfolio.filter(p => p.latest_signal?.action === 'HOLD');
-
-            return (
-                <div className="space-y-6">
-                    {/* Summary */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="card">
-                            <div className="text-sm text-gray-500">BUY Signals</div>
-                            <div className="text-3xl font-bold text-green-400">{buys.length}</div>
-                        </div>
-                        <div className="card">
-                            <div className="text-sm text-gray-500">SELL Signals</div>
-                            <div className="text-3xl font-bold text-red-400">{sells.length}</div>
-                        </div>
-                        <div className="card">
-                            <div className="text-sm text-gray-500">HOLD Signals</div>
-                            <div className="text-3xl font-bold text-yellow-400">{holds.length}</div>
-                        </div>
-                    </div>
-
-                    {/* Holdings */}
-                    <div className="space-y-4">
-                        <h2 className="text-xl font-bold">Your Holdings</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {portfolio.map(item => (
-                                <StockCard key={item.ticker} item={item} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function StockCard({ item }) {
-            const signal = item.latest_signal || {};
-            const borderClass = signal.action === 'BUY' ? 'buy-border' :
-                               signal.action === 'SELL' ? 'sell-border' :
-                               'hold-border';
-            const badge = signal.action === 'BUY' ? '🟢' :
-                         signal.action === 'SELL' ? '🔴' : '🟡';
-
-            return (
-                <div className={`card ${borderClass}`}>
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 className="text-lg font-bold">{item.ticker}</h3>
-                            <div className="text-sm text-gray-500">{item.market}</div>
-                        </div>
-                        <div className="text-2xl">{badge}</div>
-                    </div>
-
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Signal:</span>
-                            <span className="font-semibold">{signal.action || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Score:</span>
-                            <span className="font-semibold">{signal.score?.toFixed(1) || '—'}/10</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Confidence:</span>
-                            <span className="font-semibold">{signal.confidence || '—'}</span>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function PortfolioTab({ portfolio, onRefresh }) {
-            return (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-xl font-bold">Portfolio Manager</h2>
-                        <button className="button" onClick={onRefresh}>Refresh</button>
-                    </div>
-
-                    <div className="card">
-                        <h3 className="font-semibold mb-4">Holdings</h3>
-                        <div className="space-y-2">
-                            {portfolio.length === 0 ? (
-                                <p className="text-gray-500">No holdings. Add stocks via the Search tab.</p>
-                            ) : (
-                                portfolio.map(item => (
-                                    <div key={item.ticker} className="flex justify-between p-3 bg-black rounded">
-                                        <span>{item.ticker}</span>
-                                        <span>{item.latest_signal?.action || 'N/A'}</span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="card">
-                            <h3 className="font-semibold mb-2">Total Holdings</h3>
-                            <div className="text-2xl font-bold">{portfolio.length}</div>
-                        </div>
-                        <div className="card">
-                            <h3 className="font-semibold mb-2">Last Updated</h3>
-                            <div className="text-sm text-gray-500">{new Date().toLocaleTimeString()}</div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function SearchTab({ ticker, onTickerChange, onAnalyze, loading }) {
-            return (
-                <div className="max-w-2xl space-y-6">
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">Search & Analyze</h2>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                placeholder="Enter ticker (e.g., AAPL, RELIANCE.NS)"
-                                value={ticker}
-                                onChange={e => onTickerChange(e.target.value)}
-                                onKeyPress={e => e.key === 'Enter' && onAnalyze()}
-                                className="flex-1 bg-black border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
-                            />
-                            <button
-                                className="button"
-                                onClick={onAnalyze}
-                                disabled={loading}
-                            >
-                                {loading ? '⏳' : '🔍'} Analyze
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Results would show here */}
-                    <div className="card text-center text-gray-500">
-                        Enter a ticker to see 10-layer analysis breakdown
-                    </div>
-                </div>
-            );
-        }
-
-        function MacroTab({ macro, fearGreed }) {
-            return (
-                <div className="space-y-6">
-                    <h2 className="text-xl font-bold">Global Macro Analysis</h2>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="card">
-                            <h3 className="font-semibold mb-4">Market Regime</h3>
-                            <div className="text-center py-4">
-                                <div className="text-2xl mb-2">{macro.regime?.label || '🔄'}</div>
-                                <div className="text-sm text-gray-500">{macro.regime?.description || 'Analyzing...'}</div>
+                            <div style={{ background: '#1a1a2e', borderRadius: 99, height: 5, overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(100,(v/lim)*100)}%`, height: '100%', background: c, borderRadius: 99 }} />
                             </div>
                         </div>
-
-                        <div className="card">
-                            <h3 className="font-semibold mb-4">Fear & Greed</h3>
-                            <div className="text-center">
-                                <FearGaugeWidget value={fearGreed} />
-                                <div className="text-2xl font-bold mt-4">{fearGreed.toFixed(0)}/100</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="card">
-                        <h3 className="font-semibold mb-4">Sector Performance</h3>
-                        <div className="space-y-2">
-                            {macro.sectors && Object.entries(macro.sectors).slice(0, 5).map(([sector, perf]) => (
-                                <div key={sector} className="flex justify-between">
-                                    <span>{sector}</span>
-                                    <span className={perf > 0 ? 'text-green-400' : 'text-red-400'}>
-                                        {perf > 0 ? '+' : ''}{perf.toFixed(2)}%
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    ))}
                 </div>
-            );
-        }
+            )}
+        </div>
+    );
+}
 
-        function BacktestsTab() {
-            return (
-                <div className="card text-center">
-                    <h2 className="text-xl font-bold mb-4">Backtest Results</h2>
-                    <p className="text-gray-500">Select a stock from your portfolio to view backtest results</p>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
 </body>
 </html>
